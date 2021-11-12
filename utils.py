@@ -109,6 +109,7 @@ def extract_filename_info(filename: str, setting='fuji') -> str:
     if setting == 'fuji':
         label = parts[datadir_len]
         imgname = parts[datadir_len+1]
+        platename = "_".join(imgname.split('_')[1:-1])
 
         name_split_parts = imgname.split('_')
 
@@ -126,7 +127,9 @@ def extract_filename_info(filename: str, setting='fuji') -> str:
 
     elif setting == 'photobox':
         raise NotImplementedError()
+    else:
+        raise ValueError()
 
 
-    return filename, label, imgname[:-4], year, format_location(location), format_date(date), xtra, plate_idx[:-4]
+    return filename, label, imgname[:-4], platename, year, format_location(location), format_date(date), xtra, plate_idx[:-4]
     
