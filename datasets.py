@@ -6,6 +6,8 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from PIL import Image
+import torchvision.transforms as T
 
 from utils import (DATA_DIR, REPO_DIR, SAVE_DIR, extract_filename_info, get_files,
                    read_image, dataframe_columns)
@@ -58,10 +60,17 @@ class InsectImgDataset(Dataset):
         xtra = sample["xtra"]
         plate_idx = sample["plate_idx"]
 
-        img = read_image(fname, plot=False)
-        width, height = img.size
-        sample = {"img": img, 
+        pil_img = read_image(fname, plot=False)
+
+        wsize = 150
+        hsize = 150
+        pil_img = pil_img.resize((wsize,hsize), Image.ANTIALIAS)
+        
+        width, height = pil_img.size
+        tensor_img = transforms.ToTensor()(pil_img).unsqueeze_(0)
+        sample = {"tensor_img": tensor_img,
                 "label": label, 
+                # "pil_img": pil_img,
                 "imgname": imgname,
                 "platename": platename,
                 "filename": str(fname), 
