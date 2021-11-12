@@ -4,17 +4,20 @@ import psutil
 import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
+import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 from utils import (DATA_DIR, REPO_DIR, SAVE_DIR, extract_filename_info, get_files,
                    read_image, dataframe_columns)
 
 num_workers = psutil.cpu_count()
 print(f"Available workers: {num_workers}")
+seed = 42
 
-
-class DataFrameSet(Dataset):
+class InsectImgDataset(Dataset):
     """
-    Dataset class that can take a pandas.DataFrame as input.
+    Dataset class that can take a dataset directory as input.
+    It creates a dataframe with all relevant insect info such as: sticky plate name, year, date etc.
     """
 
     def __init__(self, directory=DATA_DIR, setting="fuji", transform=None):
@@ -56,6 +59,7 @@ class DataFrameSet(Dataset):
         plate_idx = sample["plate_idx"]
 
         img = read_image(fname, plot=False)
+        width, height = img.size
         sample = {"img": img, 
                 "label": label, 
                 "imgname": imgname,
@@ -65,9 +69,29 @@ class DataFrameSet(Dataset):
                 "location": location, 
                 "date": date, 
                 "year": year,
-                "xtra": xtra}
+                "xtra": xtra,
+                "width": width,
+                "height": height}
 
         if self.transform:
             sample=self.transform(sample)
 
         return tuple(sample.values())
+
+
+    def plot_samples(self, df=pd.DataFrame(), noaxis=True, title='label'):
+        if not len(df):
+            df = self.df.sample(20, replace=False, random_state=seed).reset_index(drop=True)
+        else:
+            df = df.sample(20, replace=False, random_state=seed).reset_index(drop=True)
+
+        plt.figure(figsize=(20,12))
+
+        for i in tqdm(range(20)):
+            plt.subplot(4,5,i+1)
+            img = read_image(df.loc[i].filename)
+            plt.imshow(img);
+            if title == 'label':
+                plt.title(df.loc[i].label)
+            if noaxis:
+                plt.axis('off')
