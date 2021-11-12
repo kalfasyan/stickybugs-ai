@@ -23,7 +23,7 @@ class DataFrameSet(Dataset):
     def __len__(self):
         return len(self.df)
 
-    def __gettitem__(self, idx):
+    def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
