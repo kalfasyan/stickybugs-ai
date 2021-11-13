@@ -105,14 +105,12 @@ def extract_filename_info(filename: str, setting='fuji') -> str:
     path = Path(filename)
     datadir_len = len(DATA_DIR.parts)
     parts = path.parts
+    label = parts[datadir_len]
+    imgname = parts[datadir_len+1]
+    platename = "_".join(imgname.split('_')[1:-1])
+    name_split_parts = imgname.split('_')
 
     if setting == 'fuji':
-        label = parts[datadir_len]
-        imgname = parts[datadir_len+1]
-        platename = "_".join(imgname.split('_')[1:-1])
-
-        name_split_parts = imgname.split('_')
-
         year = name_split_parts[0]
         location = name_split_parts[1]
         if location.startswith("UNDISTORTED"):
@@ -127,6 +125,7 @@ def extract_filename_info(filename: str, setting='fuji') -> str:
 
     elif setting == 'photobox':
         # TODO: similar as fuji, but with photobox filenames
+        
         raise NotImplementedError()
     else:
         raise ValueError()
@@ -134,10 +133,45 @@ def extract_filename_info(filename: str, setting='fuji') -> str:
 
     return filename, label, imgname[:-4], platename, year, format_location(location), format_date(date), xtra, plate_idx[:-4]
     
-def variance_of_laplacian(image_fname):
+def calc_variance_of_laplacian(image_fname):
     ## Credits: Pyimagesearch
     import cv2
     # compute the Laplacian of the image and then return the focus
     # measure, which is simply the variance of the Laplacian
     image = cv2.imread(image_fname,0)
     return cv2.Laplacian(image, cv2.CV_64F).var()
+
+def calc_mean_RGB_vals(image_fname):
+    import cv2
+    image = cv2.imread(image_fname)
+    (means, stds) = cv2.meanStdDev(image)
+    return np.array([(means[2], means[1], means[0])]).flatten(), \
+            np.array([(stds[2], stds[1], stds[0])]).flatten()
+
+def calc_contour_features(image_fname):
+    import cv2
+
+    img = cv2.imread(image_fname)
+    img = 255 - img
+    img_grey = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    # define a thresh
+    thresh = 110
+    # get threshold image
+    ret,thresh_img = cv2.threshold(img_grey, thresh, 255, cv2.THRESH_BINARY)
+    # find contours
+    contours, hierarchy = cv2.findContours(thresh_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    # calculate features
+    nb_contours = len(contours)
+    cnt_areas = [cv2.contourArea(cnt) for cnt in contours]
+    cnt_perimeters = [cv2.arcLength(cnt,True) for cnt in contours]
+    mean_cnt_area  = np.mean(cnt_areas)
+    mean_cnt_perimeter = np.mean(cnt_perimeters)
+    std_cnt_area = np.std(cnt_areas)
+    std_cnt_perimeter = np.std(cnt_perimeters)
+    
+    return nb_contours, cnt_areas, cnt_perimeters, mean_cnt_area, mean_cnt_perimeter, std_cnt_area, std_cnt_perimeter
+
+def plot_torch_img(x, idx):
+    import matplotlib.pyplot as plt
+    plt.imshow(x[idx].permute(1,2,0))

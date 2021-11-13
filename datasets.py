@@ -24,9 +24,10 @@ class InsectImgDataset(Dataset):
     It creates a dataframe with all relevant insect info such as: sticky plate name, year, date etc.
     """
 
-    def __init__(self, directory=DATA_DIR, setting="fuji", img_dim=150, transform=None):
+    def __init__(self, directory=DATA_DIR, ext='.png', setting="fuji", img_dim=150, transform=None):
         self.directory = directory
-        self.files = get_files(directory)
+        self.ext = ext
+        self.files = get_files(directory, ext=self.ext)
         
         self.df = pd.DataFrame(self.files, columns=['filename'])
         self.df = self.df.astype(str).reset_index(drop=True)
@@ -40,6 +41,9 @@ class InsectImgDataset(Dataset):
         for row in tqdm(self.df.itertuples(), total=len(self.df), desc="Extracting info from filenames.."):
             info.append(extract_filename_info(row.filename, setting=self.setting))
         self.df = pd.DataFrame(info, columns=[dataframe_columns])
+        if not len(self.df):
+            raise ValueError("Dataframe was not loaded.")
+        self.info_extracted = True
 
     def __len__(self):
         return len(self.df)
