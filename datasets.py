@@ -1,16 +1,18 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import psutil
 import torch
+import torchvision
+import torchvision.transforms as T
+import torchvision.transforms.functional as fn
+from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
-import matplotlib.pyplot as plt
 from tqdm import tqdm
-from PIL import Image
-import torchvision.transforms as T
 
-from utils import (DATA_DIR, REPO_DIR, SAVE_DIR, extract_filename_info, get_files,
-                   read_image, dataframe_columns)
+from utils import (DATA_DIR, REPO_DIR, SAVE_DIR, dataframe_columns,
+                   extract_filename_info, get_files, read_image)
 
 num_workers = psutil.cpu_count()
 print(f"Available workers: {num_workers}")
@@ -22,19 +24,22 @@ class InsectImgDataset(Dataset):
     It creates a dataframe with all relevant insect info such as: sticky plate name, year, date etc.
     """
 
-    def __init__(self, directory=DATA_DIR, setting="fuji", transform=None):
+    def __init__(self, directory=DATA_DIR, setting="fuji", img_dim=150, transform=None):
         self.directory = directory
         self.files = get_files(directory)
         
         self.df = pd.DataFrame(self.files, columns=['filename'])
-        self.df = self.df.reset_index(drop=True)
+        self.df = self.df.astype(str).reset_index(drop=True)
         
         self.setting = setting
-        self.transform = transform        
+        self.img_dim = img_dim
+        self.transform = transform
 
     def extract_df_info(self):
-        tmp = self.df.filename.apply(lambda x: extract_filename_info(str(x), setting=self.setting))
-        self.df = pd.DataFrame.from_records(tmp, columns=dataframe_columns)        
+        info = []
+        for row in tqdm(self.df.itertuples(), total=len(self.df), desc="Extracting info from filenames.."):
+            info.append(extract_filename_info(row.filename, setting=self.setting))
+        self.df = pd.DataFrame(info, columns=[dataframe_columns])
 
     def __len__(self):
         return len(self.df)
@@ -60,17 +65,14 @@ class InsectImgDataset(Dataset):
         xtra = sample["xtra"]
         plate_idx = sample["plate_idx"]
 
-        pil_img = read_image(fname, plot=False)
+        tensor_img = torchvision.io.read_image(fname)
+        tensor_img = fn.center_crop(tensor_img, output_size=[self.img_dim])
+        tensor_img = fn.resize(tensor_img, size=[self.img_dim])
 
-        wsize = 150
-        hsize = 150
-        pil_img = pil_img.resize((wsize,hsize), Image.ANTIALIAS)
-        
-        width, height = pil_img.size
-        tensor_img = transforms.ToTensor()(pil_img).unsqueeze_(0)
+        _, width, height = tensor_img.size()
+
         sample = {"tensor_img": tensor_img,
                 "label": label, 
-                # "pil_img": pil_img,
                 "imgname": imgname,
                 "platename": platename,
                 "filename": str(fname), 

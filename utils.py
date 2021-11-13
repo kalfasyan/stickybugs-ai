@@ -126,6 +126,7 @@ def extract_filename_info(filename: str, setting='fuji') -> str:
             plate_idx = name_split_parts[-1]
 
     elif setting == 'photobox':
+        # TODO: similar as fuji, but with photobox filenames
         raise NotImplementedError()
     else:
         raise ValueError()
@@ -133,3 +134,10 @@ def extract_filename_info(filename: str, setting='fuji') -> str:
 
     return filename, label, imgname[:-4], platename, year, format_location(location), format_date(date), xtra, plate_idx[:-4]
     
+def variance_of_laplacian(image_fname):
+    ## Credits: Pyimagesearch
+    import cv2
+    # compute the Laplacian of the image and then return the focus
+    # measure, which is simply the variance of the Laplacian
+    image = cv2.imread(image_fname,0)
+    return cv2.Laplacian(image, cv2.CV_64F).var()
