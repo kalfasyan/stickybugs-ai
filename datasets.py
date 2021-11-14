@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from tqdm import tqdm
 
-from utils import (DATA_DIR, REPO_DIR, SAVE_DIR, dataframe_columns,
+from utils import (DATA_DIR, REPO_DIR, SAVE_DIR, basic_df_columns,
                    extract_filename_info, get_files, read_image)
 
 num_workers = psutil.cpu_count()
@@ -40,7 +40,8 @@ class InsectImgDataset(Dataset):
         info = []
         for row in tqdm(self.df.itertuples(), total=len(self.df), desc="Extracting info from filenames.."):
             info.append(extract_filename_info(row.filename, setting=self.setting))
-        self.df = pd.DataFrame(info, columns=[dataframe_columns])
+        self.df = pd.DataFrame(info, columns=[basic_df_columns])
+        self.df.columns = [' '.join(col).strip() for col in self.df.columns.values]
         if not len(self.df):
             raise ValueError("Dataframe was not loaded.")
         self.info_extracted = True

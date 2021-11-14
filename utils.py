@@ -68,7 +68,7 @@ location_mapping = {
     "wortel": "wortel",
 }
 
-dataframe_columns = ['filename', 'label','imgname','platename','year','location','date','xtra','plate_idx']
+basic_df_columns = ['filename', 'label','imgname','platename','year','location','date','xtra','plate_idx']
 
 def read_image(filename, plot=False):
     img = Image.open(filename)
@@ -170,8 +170,23 @@ def calc_contour_features(image_fname):
     std_cnt_area = np.std(cnt_areas)
     std_cnt_perimeter = np.std(cnt_perimeters)
     
-    return nb_contours, cnt_areas, cnt_perimeters, mean_cnt_area, mean_cnt_perimeter, std_cnt_area, std_cnt_perimeter
+    return nb_contours, mean_cnt_area, mean_cnt_perimeter, std_cnt_area, std_cnt_perimeter
 
 def plot_torch_img(x, idx):
     import matplotlib.pyplot as plt
     plt.imshow(x[idx].permute(1,2,0))
+
+# def copy_list_of_files(files):
+
+def detect_outliers(X_train, algorithm='KNN'):
+    from pyod.models.knn import KNN   # kNN detector
+
+    if algorithm == 'KNN':
+        # train kNN detector
+        clf = KNN()
+        clf.fit(X_train)
+
+        # get the prediction label and outlier scores of the training data
+        return clf.labels_, clf.decision_scores_  # binary labels (0: inliers, 1: outliers)
+    else:
+        raise NotImplementedError()
