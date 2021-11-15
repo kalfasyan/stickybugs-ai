@@ -184,7 +184,10 @@ def plot_torch_img(x, idx):
 
 def detect_outliers(X_train, algorithm='KNN'):
     from pyod.models.knn import KNN   # kNN detector
+    from sklearn.preprocessing import StandardScaler
 
+    sc = StandardScaler()
+    X_train = sc.fit_transform(X_train)
     if algorithm == 'KNN':
         # train kNN detector
         clf = KNN()
