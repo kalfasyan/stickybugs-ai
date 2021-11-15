@@ -46,6 +46,11 @@ date_mapping = {
 
 # Creating the location mapping to fix location names from plates
 location_mapping = {
+    "arc": "arc",
+    "kortemark": "kortemark",
+    "pecq": "pecq",
+    "framez": "frasnes",
+    "braneall": "brainelalleud",
     "herentval1": "herent",
     "herentval2": "herent",
     "herentval3": "herent",
@@ -110,7 +115,7 @@ def extract_filename_info(filename: str, setting='fuji') -> str:
     platename = "_".join(imgname.split('_')[1:-1])
     name_split_parts = imgname.split('_')
 
-    if setting == 'fuji':
+    if setting == 'fuji' or setting == 'photobox':
         year = name_split_parts[0]
         location = name_split_parts[1]
         if location.startswith("UNDISTORTED"):
@@ -122,11 +127,10 @@ def extract_filename_info(filename: str, setting='fuji') -> str:
             date = name_split_parts[2]
             xtra = name_split_parts[3]  if not name_split_parts[3].startswith("3daysold") else name_split_parts[4]
             plate_idx = name_split_parts[-1]
-
-    elif setting == 'photobox':
-        # TODO: similar as fuji, but with photobox filenames
-        
-        raise NotImplementedError()
+        if date[0].lower() in ['a','b','c','d','e','f','g']:
+            date, xtra = xtra.lower(), date.lower()
+        if xtra.lower().startswith('w'):
+            xtra, date = date.lower(), date.lower()
     else:
         raise ValueError()
 
