@@ -27,7 +27,7 @@ class InsectImgDataset(Dataset):
 
     def __init__(self, df=pd.DataFrame(), directory='', ext='.png', setting="fuji", img_dim=150, transform=None):
         self.setting = setting
-        self.directory = os.path.join(str(directory), self.setting) if len(directory) else ''
+        self.directory = os.path.join(str(directory), self.setting) if len(str(directory)) else ''
         self.ext = ext
         self.df = df
 
