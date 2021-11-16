@@ -3,13 +3,15 @@ import numpy as np
 from pathlib import Path
 from configparser import ConfigParser
 from PIL import Image
+from tqdm import tqdm
 
 cfg = ConfigParser()
 cfg.read('config.ini')
 
-DATA_DIR = Path(cfg.get('base', 'data_dir'))
-REPO_DIR = Path(cfg.get('base', 'repo_dir'))
-SAVE_DIR = Path(cfg.get('base', 'save_dir'))
+working_at = 'home'
+DATA_DIR = Path(cfg.get(working_at, 'data_dir'))
+REPO_DIR = Path(cfg.get(working_at, 'repo_dir'))
+SAVE_DIR = Path(cfg.get(working_at, 'save_dir'))
 
 
 date_mapping = {
@@ -112,10 +114,15 @@ def extract_filename_info(filename: str, setting='fuji') -> str:
     parts = path.parts
     label = parts[datadir_len]
     imgname = parts[datadir_len+1]
-    platename = "_".join(imgname.split('_')[1:-1])
-    name_split_parts = imgname.split('_')
 
     if setting == 'fuji' or setting == 'photobox':
+
+        if setting=='photobox':
+            platename = "_".join(imgname.split('_')[1:-2])
+        else:
+            platename = "_".join(imgname.split('_')[1:-1])
+        name_split_parts = imgname.split('_')
+
         year = name_split_parts[0]
         location = name_split_parts[1]
         if location.startswith("UNDISTORTED"):
@@ -197,3 +204,34 @@ def detect_outliers(X_train, algorithm='KNN'):
         return clf.labels_, clf.decision_scores_  # binary labels (0: inliers, 1: outliers)
     else:
         raise NotImplementedError()
+
+def worker_init_fn(worker_id):                                                          
+    np.random.seed(np.random.get_state()[1][0] + worker_id)
+
+def model_selector(modelname, pretrained=False):
+    if modelname == 'densenet121':
+        from torchvision.models import densenet121
+        return densenet121(pretrained=pretrained)
+    else: 
+        raise ValueError("No model returned")
+
+def save_checkpoint(state, is_best, filename=''):
+    import torch
+    from shutil import copyfile
+    filename = f'{SAVE_DIR}/{filename}.pth.tar'
+    torch.save(state, filename)
+    if is_best:
+        copyfile(filename, f"{filename.split('.')[0]}_best.pth.tar")
+
+def load_checkpoint(filename, model, optimizer):
+    import torch
+    assert isinstance(filename, str) and filename.endswith('pth.tar'), "Only works with a pth.tar file."
+    checkpoint = torch.load(filename)
+    model.load_state_dict(checkpoint['state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer'])
+    return model, optimizer
+
+def copy_files(filelist, destination):
+    from shutil import copy2
+    for f in tqdm(filelist, total=len(filelist), desc="Copying files.."):
+        copy2(f, destination)

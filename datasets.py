@@ -24,13 +24,21 @@ class InsectImgDataset(Dataset):
     It creates a dataframe with all relevant insect info such as: sticky plate name, year, date etc.
     """
 
-    def __init__(self, directory=DATA_DIR, ext='.png', setting="fuji", img_dim=150, transform=None):
-        self.directory = directory
+    def __init__(self, df=pd.DataFrame(), directory='', ext='.png', setting="fuji", img_dim=150, transform=None):
+        self.directory = str(directory)
         self.ext = ext
-        self.files = get_files(directory, ext=self.ext)
-        
-        self.df = pd.DataFrame(self.files, columns=['filename'])
-        self.df = self.df.astype(str).reset_index(drop=True)
+        self.df = df
+
+        if not len(self.directory):
+            assert len(self.df), "You chose to use a pre-made dataframe."
+        else:
+            assert len(self.directory)
+            assert not len(self.df), "You chose to use a directory and load its filenames into a dataframe."
+
+            self.files = get_files(directory, ext=self.ext)
+            
+            self.df = pd.DataFrame(self.files, columns=['filename'])
+            self.df = self.df.astype(str).reset_index(drop=True)
         
         self.setting = setting
         self.img_dim = img_dim
