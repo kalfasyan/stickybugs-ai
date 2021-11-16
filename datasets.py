@@ -44,12 +44,13 @@ class InsectImgDataset(Dataset):
         self.img_dim = img_dim
         self.transform = transform
 
-    def extract_df_info(self):
+    def extract_df_info(self, fix_cols=False):
         info = []
         for row in tqdm(self.df.itertuples(), total=len(self.df), desc="Extracting info from filenames.."):
             info.append(extract_filename_info(row.filename, setting=self.setting))
-        self.df = pd.DataFrame(info, columns=[basic_df_columns])
-        self.df.columns = [' '.join(col).strip() for col in self.df.columns.values]
+        self.df = pd.DataFrame(info, columns=basic_df_columns)
+            if fix_cols:
+                self.df.columns = [' '.join(col).strip() for col in self.df.columns.values]
         if not len(self.df):
             raise ValueError("Dataframe was not loaded.")
         self.info_extracted = True
