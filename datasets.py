@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import os
 import psutil
 import torch
 import torchvision
@@ -25,7 +26,8 @@ class InsectImgDataset(Dataset):
     """
 
     def __init__(self, df=pd.DataFrame(), directory='', ext='.png', setting="fuji", img_dim=150, transform=None):
-        self.directory = str(directory)
+        self.setting = setting
+        self.directory = os.path.join(str(directory), self.setting)
         self.ext = ext
         self.df = df
 
@@ -40,7 +42,6 @@ class InsectImgDataset(Dataset):
             self.df = pd.DataFrame(self.files, columns=['filename'])
             self.df = self.df.astype(str).reset_index(drop=True)
         
-        self.setting = setting
         self.img_dim = img_dim
         self.transform = transform
 
@@ -49,8 +50,8 @@ class InsectImgDataset(Dataset):
         for row in tqdm(self.df.itertuples(), total=len(self.df), desc="Extracting info from filenames.."):
             info.append(extract_filename_info(row.filename, setting=self.setting))
         self.df = pd.DataFrame(info, columns=basic_df_columns)
-            if fix_cols:
-                self.df.columns = [' '.join(col).strip() for col in self.df.columns.values]
+        if fix_cols:
+            self.df.columns = [' '.join(col).strip() for col in self.df.columns.values]
         if not len(self.df):
             raise ValueError("Dataframe was not loaded.")
         self.info_extracted = True

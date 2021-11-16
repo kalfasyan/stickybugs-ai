@@ -8,7 +8,7 @@ from tqdm import tqdm
 cfg = ConfigParser()
 cfg.read('config.ini')
 
-working_at = 'home'
+working_at = str(cfg.get('base', 'working_at'))
 DATA_DIR = Path(cfg.get(working_at, 'data_dir'))
 REPO_DIR = Path(cfg.get(working_at, 'repo_dir'))
 SAVE_DIR = Path(cfg.get(working_at, 'save_dir'))
@@ -106,11 +106,13 @@ def format_location(location: str) -> str:
     return location_mapping[location.lower()]
 
 def extract_filename_info(filename: str, setting='fuji') -> str:
+    import os
+
     if not isinstance(filename, str):
         raise TypeError("Provide the filename as a string.")
     
     path = Path(filename)
-    datadir_len = len(DATA_DIR.parts)
+    datadir_len = len(Path(os.path.join(DATA_DIR, setting)).parts)
     parts = path.parts
     label = parts[datadir_len]
     imgname = parts[datadir_len+1]
