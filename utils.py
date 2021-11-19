@@ -4,6 +4,7 @@ from pathlib import Path
 from configparser import ConfigParser
 from PIL import Image
 from tqdm import tqdm
+import torch 
 
 cfg = ConfigParser()
 cfg.read('config.ini')
@@ -214,6 +215,18 @@ def model_selector(modelname, pretrained=False):
     if modelname == 'densenet121':
         from torchvision.models import densenet121
         return densenet121(pretrained=pretrained)
+    elif modelname == 'densenet169':
+        from torchvision.models import densenet169
+        return densenet169(pretrained=pretrained)
+    elif modelname == 'efficientnetb0':
+        from torchvision.models import efficientnet_b0
+        return efficientnet_b0(pretrained=pretrained)
+    elif modelname == 'resnet101':
+        from torchvision.models import resnet101
+        return resnet101(pretrained=pretrained)
+    elif modelname == 'resnet50':
+        from torchvision.models import resnet50
+        return resnet50(pretrained=pretrained)
     else: 
         raise ValueError("No model returned")
 
@@ -237,3 +250,73 @@ def copy_files(filelist, destination):
     from shutil import copy2
     for f in tqdm(filelist, total=len(filelist), desc="Copying files.."):
         copy2(f, destination)
+
+@torch.no_grad()
+def get_all_preds(model, loader, dataframe=False, final_nodes=2):
+    import torch
+    all_preds = torch.tensor([]).cuda()
+    all_labels = torch.tensor([]).cuda()
+    all_paths = []
+    all_idx = torch.tensor([]).cuda()
+    for x_batch, y_batch, path_batch, idx_batch in tqdm(loader):
+
+        preds = model(x_batch.cuda())
+        all_preds = torch.cat((all_preds, preds), dim=0)
+        all_labels = torch.cat((all_labels, y_batch.cuda()), dim=0)
+        all_paths.extend(path_batch)
+        all_idx = torch.cat((all_idx, idx_batch.cuda()), dim=0)
+    
+    out = all_preds,all_labels,all_paths,all_idx
+
+    if not dataframe:
+        return out
+    else:
+        if final_nodes==1:
+            df_out = pd.DataFrame(out[0], columns=['pred'])
+        else:
+            df_out = pd.DataFrame(out[0], columns=[f'pred{i}' for i in range(final_nodes)])
+        df_out['y'] = out[1].cpu()
+        df_out['fnames'] = out[2]
+        df_out['idx'] = out[3].cpu()
+        df_out['softmax'] = torch.argmax(F.softmax(out[0], dim=1), dim=1).detach().cpu()
+        return df_out
+
+def test_model(model, loader, dataset, labelencoder):
+    from sklearn.metrics import balanced_accuracy_score, confusion_matrix
+    from tqdm import tqdm
+
+    model.eval()
+    correct = 0
+    y_pred,y_true = [],[]
+
+    feats = ['imgname','platename','filename','plate_idx','location','date','year','xtra','width','height']
+    info = {i:[] for i in feats}    
+    for x_batch,y_batch,imgname,platename,filename,plate_idx,location,date,year,xtra,width,height in tqdm(loader, desc='Testing..\t'):
+        y_batch = torch.as_tensor(labelencoder.transform(y_batch)).type(torch.LongTensor)
+        x_batch,y_batch = x_batch.cuda(), y_batch.cuda()
+        pred = model(x_batch)
+        _, preds = torch.max(pred, 1)
+        y_pred.extend(preds.detach().cpu().numpy())
+        y_true.extend(y_batch.detach().cpu().numpy())
+        correct += (pred.argmax(axis=1) == y_batch).float().sum().item()
+
+        info['imgname'].extend(imgname)
+        info['platename'].extend(platename)
+        info['filename'].extend(filename)
+        info['plate_idx'].extend(plate_idx)
+        info['location'].extend(location)
+        info['date'].extend(date)
+        info['year'].extend(year)
+        info['xtra'].extend(xtra)
+        info['width'].extend(width)
+        info['height'].extend(height)
+
+    accuracy = correct / len(dataset) * 100.
+
+    bacc = balanced_accuracy_score(y_pred=y_pred, y_true=y_true)
+    cm = confusion_matrix(y_pred=y_pred, y_true=y_true, normalize='true')
+
+    print(f"Accuracy: {accuracy:.2f}")
+    print(f"Balanced accuracy: {bacc*100.:.2f}")
+    print(f"Confusion matrix: \n{cm}")
+    return bacc, cm, y_true, y_pred, info

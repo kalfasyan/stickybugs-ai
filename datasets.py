@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import psutil
 import torch
+import cv2
 import torchvision
 import torchvision.transforms as T
 import torchvision.transforms.functional as fn
@@ -80,11 +81,15 @@ class InsectImgDataset(Dataset):
         xtra = sample["xtra"]
         plate_idx = sample["plate_idx"]
 
-        tensor_img = torchvision.io.read_image(fname)
-        tensor_img = fn.center_crop(tensor_img, output_size=[self.img_dim])
-        tensor_img = fn.resize(tensor_img, size=[self.img_dim])
+        # tensor_img = torchvision.io.read_image(fname)
+        tensor_img = cv2.imread(fname)
+        tensor_img = cv2.cvtColor(tensor_img, cv2.COLOR_BGR2RGB)
+        tensor_img = cv2.resize(tensor_img, (150,150), interpolation=cv2.INTER_AREA)
+        
+        # tensor_img = fn.center_crop(tensor_img, output_size=[self.img_dim])
+        # tensor_img = fn.resize(tensor_img, size=[self.img_dim])
 
-        _, width, height = tensor_img.size()
+        _, width, height = tensor_img.shape#tensor_img.size()
 
         sample = {"tensor_img": tensor_img,
                 "label": label, 
@@ -100,7 +105,8 @@ class InsectImgDataset(Dataset):
                 "height": height}
 
         if self.transform:
-            sample=self.transform(sample)
+            sample["tensor_img"]=self.transform(image=sample["tensor_img"])['image']
+            sample["tensor_img"] = np.swapaxes(sample["tensor_img"], 0,2)
 
         return tuple(sample.values())
 
