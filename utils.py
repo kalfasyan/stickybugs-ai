@@ -221,6 +221,9 @@ def model_selector(modelname, pretrained=False):
     elif modelname == 'efficientnetb0':
         from torchvision.models import efficientnet_b0
         return efficientnet_b0(pretrained=pretrained)
+    elif modelname == 'efficientnetb1':
+        from torchvision.models import efficientnet_b1
+        return efficientnet_b1(pretrained=pretrained)
     elif modelname == 'resnet101':
         from torchvision.models import resnet101
         return resnet101(pretrained=pretrained)
@@ -281,7 +284,7 @@ def get_all_preds(model, loader, dataframe=False, final_nodes=2):
         df_out['softmax'] = torch.argmax(F.softmax(out[0], dim=1), dim=1).detach().cpu()
         return df_out
 
-def test_model(model, loader, dataset, labelencoder):
+def test_model(model, loader, dataset):
     from sklearn.metrics import balanced_accuracy_score, confusion_matrix
     from tqdm import tqdm
 
@@ -292,7 +295,7 @@ def test_model(model, loader, dataset, labelencoder):
     feats = ['imgname','platename','filename','plate_idx','location','date','year','xtra','width','height']
     info = {i:[] for i in feats}    
     for x_batch,y_batch,imgname,platename,filename,plate_idx,location,date,year,xtra,width,height in tqdm(loader, desc='Testing..\t'):
-        y_batch = torch.as_tensor(labelencoder.transform(y_batch)).type(torch.LongTensor)
+        y_batch = torch.as_tensor(y_batch).type(torch.LongTensor)
         x_batch,y_batch = x_batch.cuda(), y_batch.cuda()
         pred = model(x_batch)
         _, preds = torch.max(pred, 1)
@@ -316,7 +319,7 @@ def test_model(model, loader, dataset, labelencoder):
     bacc = balanced_accuracy_score(y_pred=y_pred, y_true=y_true)
     cm = confusion_matrix(y_pred=y_pred, y_true=y_true, normalize='true')
 
-    print(f"Accuracy: {accuracy:.2f}")
-    print(f"Balanced accuracy: {bacc*100.:.2f}")
-    print(f"Confusion matrix: \n{cm}")
+    # print(f"Accuracy: {accuracy:.2f}")
+    # print(f"Balanced accuracy: {bacc*100.:.2f}")
+    # print(f"Confusion matrix: \n{cm}")
     return bacc, cm, y_true, y_pred, info
