@@ -218,6 +218,9 @@ def model_selector(modelname, pretrained=False):
     elif modelname == 'densenet169':
         from torchvision.models import densenet169
         return densenet169(pretrained=pretrained)
+    elif modelname == 'vgg16':
+        from torchvision.models import vgg16
+        return vgg16(pretrained=pretrained)
     elif modelname == 'efficientnetb0':
         from torchvision.models import efficientnet_b0
         return efficientnet_b0(pretrained=pretrained)
