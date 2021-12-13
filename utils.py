@@ -60,6 +60,7 @@ location_mapping = {
     "herentcontrole": "herent",
     "merchtem": "merchtem",
     "mollem": "mollem",
+    "mollom": "mollem",
     "landen": "landen",
     "herent": "herent",
     "her": "herent",
@@ -221,6 +222,9 @@ def model_selector(modelname, pretrained=False):
     elif modelname == 'vgg16':
         from torchvision.models import vgg16
         return vgg16(pretrained=pretrained)
+    elif modelname == 'vgg19':
+        from torchvision.models import vgg19
+        return vgg19(pretrained=pretrained)
     elif modelname == 'efficientnetb0':
         from torchvision.models import efficientnet_b0
         return efficientnet_b0(pretrained=pretrained)
