@@ -55,6 +55,8 @@ class InsectImgDataset(Dataset):
             self.df.columns = [' '.join(col).strip() for col in self.df.columns.values]
         if not len(self.df):
             raise ValueError("Dataframe was not loaded.")
+        self.df.year = self.df.year.astype('int64')
+        self.df.plate_idx = self.df.plate_idx.astype('int64')
         self.info_extracted = True
 
     def __len__(self):
