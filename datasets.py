@@ -1,16 +1,14 @@
+import os
+
+import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import os
 import psutil
 import torch
-import cv2
+from torch.utils.data import  Dataset
 import torchvision
-import torchvision.transforms as T
 import torchvision.transforms.functional as fn
-from PIL import Image
-from torch.utils.data import DataLoader, Dataset
-from torchvision import transforms
 from tqdm import tqdm
 
 from utils import (DATA_DIR, REPO_DIR, SAVE_DIR, basic_df_columns,
@@ -83,13 +81,7 @@ class InsectImgDataset(Dataset):
         xtra = sample["xtra"]
         plate_idx = sample["plate_idx"]
 
-        # tensor_img = torchvision.io.read_image(fname)
-        tensor_img = cv2.imread(fname)
-        tensor_img = cv2.cvtColor(tensor_img, cv2.COLOR_BGR2RGB)
-        tensor_img = cv2.resize(tensor_img, (150,150), interpolation=cv2.INTER_AREA)
-        
-        # tensor_img = fn.center_crop(tensor_img, output_size=[self.img_dim])
-        # tensor_img = fn.resize(tensor_img, size=[self.img_dim])
+        tensor_img = torchvision.io.read_image(fname)
 
         _, width, height = tensor_img.shape#tensor_img.size()
 
@@ -107,8 +99,7 @@ class InsectImgDataset(Dataset):
                 "height": height}
 
         if self.transform:
-            sample["tensor_img"]=self.transform(image=sample["tensor_img"])['image']
-            sample["tensor_img"] = np.swapaxes(sample["tensor_img"], 0,2)
+            sample["tensor_img"] = self.transform(sample["tensor_img"])
 
         return tuple(sample.values())
 

@@ -1,10 +1,11 @@
-import pandas as pd
-import numpy as np
-from pathlib import Path
 from configparser import ConfigParser
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import torch
 from PIL import Image
 from tqdm import tqdm
-import torch 
 
 cfg = ConfigParser()
 cfg.read('config.ini')
@@ -151,6 +152,7 @@ def extract_filename_info(filename: str, setting='fuji') -> str:
 def calc_variance_of_laplacian(image_fname):
     ## Credits: Pyimagesearch
     import cv2
+
     # compute the Laplacian of the image and then return the focus
     # measure, which is simply the variance of the Laplacian
     image = cv2.imread(image_fname,0)
@@ -194,7 +196,7 @@ def plot_torch_img(x, idx):
 # def copy_list_of_files(files):
 
 def detect_outliers(X_train, algorithm='KNN'):
-    from pyod.models.knn import KNN   # kNN detector
+    from pyod.models.knn import KNN  # kNN detector
     from sklearn.preprocessing import StandardScaler
 
     sc = StandardScaler()
@@ -219,6 +221,15 @@ def model_selector(modelname, pretrained=False):
     elif modelname == 'densenet169':
         from torchvision.models import densenet169
         return densenet169(pretrained=pretrained)
+    elif modelname == 'mobilenetv3l':
+        from torchvision.models import mobilenet_v3_large
+        return mobilenet_v3_large(pretrained=pretrained)
+    elif modelname == 'mobilenetv2':
+        from torchvision.models import mobilenet_v2
+        return mobilenet_v2(pretrained=pretrained)
+    elif modelname == 'mobilenetv2quant':
+        from torchvision.models.quantization import mobilenet_v2
+        return mobilenet_v2(pretrained=pretrained, quantize=True)
     elif modelname == 'vgg16':
         from torchvision.models import vgg16
         return vgg16(pretrained=pretrained)
@@ -241,8 +252,9 @@ def model_selector(modelname, pretrained=False):
         raise ValueError("No model returned")
 
 def save_checkpoint(state, is_best, filename=''):
-    import torch
     from shutil import copyfile
+
+    import torch
     filename = f'{SAVE_DIR}/{filename}.pth.tar'
     torch.save(state, filename)
     if is_best:
