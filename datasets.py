@@ -82,6 +82,7 @@ class InsectImgDataset(Dataset):
         plate_idx = sample["plate_idx"]
 
         tensor_img = torchvision.io.read_image(fname)
+        tensor_img = fn.resize(tensor_img, size=(150,150))
 
         _, width, height = tensor_img.shape#tensor_img.size()
 
