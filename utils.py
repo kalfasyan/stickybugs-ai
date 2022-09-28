@@ -15,6 +15,8 @@ DATA_DIR = Path(cfg.get(working_at, 'data_dir'))
 REPO_DIR = Path(cfg.get(working_at, 'repo_dir'))
 SAVE_DIR = Path(cfg.get(working_at, 'save_dir'))
 
+BINARY_DATA_DIR = Path(cfg.get(working_at, 'binary_data_dir'))
+BINARY_SAVE_DIR = Path(cfg.get(working_at, 'binary_save_dir'))
 
 date_mapping = {
     "1926719": "w30",
