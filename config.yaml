@@ -1,0 +1,35 @@
+available_systems:
+- canon
+- fuji
+- photobox
+- phoneboxS20FE
+- phoneboxS22Ultra
+base_dir: /home/u0159868/data/INSECTS/All_sticky_plate_images/created_data
+batch_size: 32
+batch_size_test: 64
+batch_size_val: 64
+classes_to_remove:
+- wswl
+- grv
+- other
+crossvalidate_system:
+- phoneboxS22Ultra
+img_size: 150
+loss: SCE
+loss_thresh_cleaning: 5.0
+modelname: mobilenetv3_large_100.miil_in21k_ft_in1k
+modelname_cleaning: mobilenetv3_large_100.miil_in21k_ft_in1k
+multi_system_training:
+- phoneboxS22Ultra
+num_epochs: 36
+num_epochs_cleaning: 10
+num_folds_cleaning: 3
+num_workers: -1
+pretrained: 'True'
+pretrained_finetune_all: 'True'
+pretrained_on:
+- fuji
+- photobox
+system: phoneboxS22Ultra
+wandb_log: 'False'
+weeks: -1
