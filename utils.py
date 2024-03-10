@@ -259,7 +259,7 @@ def send_teams_message(message):
 
     import requests
     
-    webhook_url = "https://kuleuven.webhook.office.com/webhookb2/626b255b-8871-4cec-9dd6-486811dd7dfb@3973589b-9e40-4eb5-800e-b0b6383d1621/IncomingWebhook/124d01d8b14347ed8b9c32bf3d8c2434/c3512653-3fdb-4779-861d-e5c4c07729a2"
+    webhook_url = ""
     headers = {"Content-Type": "application/json"}
     data = {"text": message}
 
